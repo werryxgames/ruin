@@ -1,0 +1,12 @@
+[build]
+target = "target.x86_64.json"
+
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
+
+[alias]
+custom-test = "test"
+
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins"]

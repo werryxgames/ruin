@@ -1,0 +1,37 @@
+[package]
+name = "ruin"
+version = "0.1.0"
+edition = "2021"
+authors = ["Werryx Games <werryxgames@proton.me>"]
+
+#[profile.dev]
+#panic = "abort"
+
+#[profile.release]
+#panic = "abort"
+
+[dependencies]
+bootloader = { version = "0.9.23", features = ["map_physical_memory"] }
+volatile = "0.2.6"
+spin = "0.9.8"
+x86_64 = "0.14.10"
+uart_16550 = "0.3.0"
+pic8259 = "0.10.4"
+
+[dependencies.lazy_static]
+version = "1.4.0"
+features = ["spin_no_std"]
+
+[package.metadata.bootimage]
+run-args = ["-serial", "stdio"]
+test-args = ["-device", "isa-debug-exit,iobase=0xF4,iosize=0x04", "-serial", "stdio", "-display", "none"]
+test-success-exit-code = 33
+test-timeout = 300
+
+[[test]]
+name = "should_panic"
+harness = false
+
+[[test]]
+name = "stack_overflow"
+harness = false
