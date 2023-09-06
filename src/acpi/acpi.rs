@@ -1,5 +1,5 @@
 #[repr(C, packed)]
-pub struct xsdp {
+pub struct Xsdp {
     pub signature: [char; 8],
     pub checksum: u8,
     pub oemiud: [char; 6],
@@ -11,7 +11,7 @@ pub struct xsdp {
     pub _reserved: [u8; 3]
 }
 
-pub unsafe fn check_xsdp(xsdp_ptr: *const xsdp) -> bool {
+pub unsafe fn check_xsdp(xsdp_ptr: *const Xsdp) -> bool {
     let mut sum: u8 = 0;
 
     for i in 0..20 {
@@ -36,14 +36,14 @@ pub unsafe fn check_xsdp(xsdp_ptr: *const xsdp) -> bool {
     return sum2 == 0;
 }
 
-pub fn find_xsdp_bios() -> Option<*const xsdp> {
+pub fn find_xsdp_bios() -> Option<*const Xsdp> {
     for mem in 0xE0000..0xFFFFF - 20 { // 20 is the size of ACPI 1.0 XSDP (RSDP) table
         unsafe {
             let string: *const char = mem as *const char;
 
             if *string == 'R' && *string.add(1) == 'S' && *string.add(2) == 'D' && *string.add(3) == ' ' && *string.add(4) == 'P' && *string.add(5) == 'T' && *string.add(6) == 'R' && *string.add(7) == ' ' {
-                if check_xsdp(string as *const xsdp) {
-                    return Some(string as *const xsdp);
+                if check_xsdp(string as *const Xsdp) {
+                    return Some(string as *const Xsdp);
                 }
             }
         }

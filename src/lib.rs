@@ -11,6 +11,7 @@ pub mod interrupts;
 pub mod gdt;
 pub mod keyboard;
 pub mod pci;
+pub mod memory;
 #[path = "./storage/ata_pio.rs"]
 pub mod ata_pio;
 #[path = "./acpi/acpi.rs"]
@@ -19,6 +20,9 @@ pub mod acpi;
 use core::panic::PanicInfo;
 
 use x86_64::instructions::port::Port;
+
+#[cfg(test)]
+use bootloader::{BootInfo, entry_point};
 
 pub fn halt_loop() -> ! {
     loop {
@@ -83,15 +87,18 @@ pub fn init() {
     interrupts::init_idt();
     unsafe { interrupts::PICS_MUTEX.lock().initialize(); }
     x86_64::instructions::interrupts::enable();
-    acpi::find_xsdp_bios();
+    //acpi::find_xsdp_bios();
     // ata_pio::initialize();
     println!("Vendor: {}", pci::check_vendor(0, 0));
 }
 
 #[cfg(test)]
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+pub fn kernel_test_start(_boot_info: &'static BootInfo) -> ! {
     init();
     test_main();
     halt_loop();
 }
+
+#[cfg(test)]
+entry_point!(kernel_test_start);
+

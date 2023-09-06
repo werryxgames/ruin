@@ -22,10 +22,10 @@ pub fn read_config_u16(bus: u8, slot: u8, func: u8, offset: u8) -> u16 {
 
 pub fn check_vendor(bus: u8, slot: u8) -> u16 {
     let vendor: u16 = read_config_u16(bus, slot, 0, 0);
-    let device: u16;
+    let _device: u16;
 
     if vendor != 0xFFFF {
-        device = read_config_u16(bus, slot, 0, 2);
+        _ = read_config_u16(bus, slot, 0, 2);
     }
 
     return vendor;
