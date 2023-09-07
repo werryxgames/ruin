@@ -20,6 +20,7 @@ pub mod ata_pio;
 #[path = "./acpi/acpi.rs"]
 pub mod acpi;
 pub mod allocator;
+pub mod task;
 
 use core::panic::PanicInfo;
 

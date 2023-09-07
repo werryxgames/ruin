@@ -6,14 +6,15 @@
 
 extern crate alloc;
 use core::panic::PanicInfo;
-use alloc::{boxed::Box, vec::Vec};
-use ruin::{halt_loop, serial_println, println, memory, allocator};
+use ruin::{serial_println, println, memory, allocator, task::{executor::Executor, Task}};
 use bootloader::{BootInfo, entry_point};
 use x86_64::VirtAddr;
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
+    use ruin::halt_loop;
+
     serial_println!("{}", info);
     println!("{}", info);
     halt_loop();
@@ -25,6 +26,14 @@ fn panic(info: &PanicInfo) -> ! {
     ruin::panic_test(info)
 }
 
+async fn async_number() -> u8 {
+    42
+}
+
+async fn async_print_number() {
+    println!("Async: {}", async_number().await);
+}
+
 pub fn kernel_start(boot_info: &'static BootInfo) -> ! {
     ruin::init();
 
@@ -34,16 +43,11 @@ pub fn kernel_start(boot_info: &'static BootInfo) -> ! {
     let mut mapper = unsafe { memory::init(VirtAddr::new(boot_info.physical_memory_offset)) };
     let mut frame_allocator = unsafe { memory::MemoryMapFrameAllocator::new(&boot_info.memory_map) };
     allocator::init_heap(&mut mapper, &mut frame_allocator).unwrap();
-    let x = Box::new(42);
-    println!("Box ptr = {:p}", x);
-    let mut vec = Vec::new();
 
-    for i in 0..500 {
-        vec.push(i);
-    }
+    #[cfg(test)]
+    test_main();
 
-    println!("Vec ptr = {:p}", vec.as_slice());
-    allocator::map_physical(&mut mapper, 0xE0000, 0xFFFFF).unwrap();
+    allocator::map_physical(&mut mapper, 0xE0000, 0x1FFFF).unwrap();
 
     if ruin::acpi::find_xsdp_bios().is_some() {
         println!("Found XSDP")
@@ -54,11 +58,10 @@ pub fn kernel_start(boot_info: &'static BootInfo) -> ! {
     // ata_pio::initialize();
     println!("Vendor: {}", ruin::pci::check_vendor(0, 0));
 
-    #[cfg(test)]
-    test_main();
-
-    println!("Entered infinite loop");
-    halt_loop();
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(async_print_number()));
+    executor.spawn(Task::new(ruin::task::keyboard::print_keypress()));
+    executor.run();
 }
 
 entry_point!(kernel_start);

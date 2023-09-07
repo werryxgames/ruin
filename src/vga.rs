@@ -120,6 +120,16 @@ impl VgaWriter {
         self.clear_row(BUFFER_HEIGHT - 1);
         self.column = 0;
     }
+
+    pub fn set_color(&mut self, foreround: VgaColor, background: VgaColor) {
+        self.color = ColorCode::new(foreround, background);
+    }
+
+    pub fn clear(&mut self) {
+        for row in 0..BUFFER_HEIGHT {
+            self.clear_row(row)
+        }
+    }
 }
 
 impl Write for VgaWriter {

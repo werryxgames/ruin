@@ -23,6 +23,20 @@ linked_list_allocator = "0.10"
 version = "1.4"
 features = ["spin_no_std"]
 
+[dependencies.crossbeam-queue]
+version = "0.3"
+default-features = false
+features = ["alloc"]
+
+[dependencies.conquer-once]
+version = "0.4"
+default-features = false
+
+[dependencies.futures-util]
+version = "0.3"
+default-features = false
+features = ["alloc"]
+
 [package.metadata.bootimage]
 run-args = ["-serial", "stdio"]
 test-args = ["-device", "isa-debug-exit,iobase=0xF4,iosize=0x04", "-serial", "stdio", "-display", "none"]

@@ -1,6 +1,5 @@
 use lazy_static::lazy_static;
-use x86_64::instructions::port::Port;
-use crate::println;
+use crate::{println, task::keyboard::ScancodeStream};
 use spin::{Mutex, MutexGuard};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -229,8 +228,9 @@ lazy_static! {
     });
 }
 
-/*
 fn print_keyboard() {
+    use crate::vga;
+
     fn print_sc(pressed: bool, text: &str) {
         let mut writer: MutexGuard<vga::VgaWriter> = vga::WRITER.lock();
 
@@ -352,10 +352,9 @@ fn print_keyboard() {
     print_sc(kbd.numpad_dot_pressed, ".");
     println!();
 }
-*/
 
-pub fn handle_key_press2(port: &mut Port<u8>) {
-    let scancode: u8 = unsafe { port.read() };
+pub async fn handle_key_press2(stream: &mut ScancodeStream) {
+    let scancode: u8 = stream.get_next().await;
 
     match scancode {
         0x1C => KEYBOARD.lock().numpad_enter_pressed = true,
@@ -396,8 +395,8 @@ pub fn handle_key_press2(port: &mut Port<u8>) {
     }
 }
 
-pub fn handle_key_press3(port: &mut Port<u8>) {
-    let scancode: u16 = unsafe { ((port.read() as u16) << 8) | port.read() as u16 };
+pub async fn handle_key_press3(stream: &mut ScancodeStream) {
+    let scancode: u16 = ((stream.get_next().await as u16) << 8) | stream.get_next().await as u16;
 
     match scancode {
         0x1D45 => KEYBOARD.lock().pause_pressed = true,
@@ -406,8 +405,8 @@ pub fn handle_key_press3(port: &mut Port<u8>) {
     }
 }
 
-pub fn handle_key_press(port: &mut Port<u8>) {
-    let scancode: u8 = unsafe { port.read() };
+pub async fn handle_key_press(stream: &mut ScancodeStream) {
+    let scancode: u8 = stream.get_next().await;
 
     match scancode {
         0x01 => KEYBOARD.lock().esc_pressed = true,
@@ -594,10 +593,10 @@ pub fn handle_key_press(port: &mut Port<u8>) {
         0xD7 => KEYBOARD.lock().f11_pressed = false,
         0xD8 => KEYBOARD.lock().f12_pressed = false,
         0xDD => KEYBOARD.lock().context_menu_pressed = false,
-        0xE0 => handle_key_press2(port),
-        0xE1 => handle_key_press3(port),
+        0xE0 => handle_key_press2(stream).await,
+        0xE1 => handle_key_press3(stream).await,
         _ => println!("{}", scancode)
     }
 
-    // print_keyboard();
+    print_keyboard();
 }

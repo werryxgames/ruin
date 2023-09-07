@@ -3,7 +3,8 @@ use pic8259::ChainedPics;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use x86_64::instructions::port::Port;
 use x86_64::registers::control::Cr2;
-use crate::{gdt, println, keyboard};
+use crate::task::keyboard::add_scancode;
+use crate::{gdt, println};
 use spin::Mutex;
 
 pub const PIC1_OFFSET: u8 = 32;
@@ -58,7 +59,9 @@ extern "x86-interrupt" fn on_hardware_timer(_stack_frame: InterruptStackFrame) {
 
 extern "x86-interrupt" fn on_hardware_keyboard(_stack_frame: InterruptStackFrame) {
     let mut port: Port<u8> = Port::new(0x60);
-    keyboard::handle_key_press(&mut port);
+    let scancode: u8 = unsafe { port.read() };
+    add_scancode(scancode);
+    // keyboard::handle_key_press(&mut port);
     unsafe { PICS_MUTEX.lock().notify_end_of_interrupt(HardwareInterrupt::Keyboard.to_u8()); }
 }
 
