@@ -19,6 +19,15 @@ jobs:
       uses: docker/setup-qemu-action@v2
       with:
         platforms: "x86_64"
+    - name: Set up rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+    - name: Run cargo check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
     - name: Build
       run: cargo build --verbose
     - name: Run tests
