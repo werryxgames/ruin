@@ -2,8 +2,11 @@
 #![no_main]
 #![feature(custom_test_frameworks)]
 #![feature(abi_x86_interrupt)]
+#![feature(const_mut_refs)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+
+extern crate alloc;
 
 pub mod serial;
 pub mod vga;
@@ -16,6 +19,7 @@ pub mod memory;
 pub mod ata_pio;
 #[path = "./acpi/acpi.rs"]
 pub mod acpi;
+pub mod allocator;
 
 use core::panic::PanicInfo;
 
@@ -32,7 +36,8 @@ pub fn halt_loop() -> ! {
 
 pub fn panic_test(info: &PanicInfo) -> ! {
     serial_println!("Fail: {}", info);
-    halt_loop();
+    exit_qemu(QemuExitCode::Fail);
+    loop {}
 }
 
 #[cfg(test)]
@@ -55,7 +60,7 @@ impl<T> Testable for T where T: Fn() {
     }
 }
 
-pub fn test_runner(tests: &[&dyn Fn()]) {
+pub fn test_runner(tests: &[&dyn Testable]) {
     serial_println!("Total tests: {}", tests.len());
     let mut current_test: usize = 0;
 
@@ -87,9 +92,6 @@ pub fn init() {
     interrupts::init_idt();
     unsafe { interrupts::PICS_MUTEX.lock().initialize(); }
     x86_64::instructions::interrupts::enable();
-    //acpi::find_xsdp_bios();
-    // ata_pio::initialize();
-    println!("Vendor: {}", pci::check_vendor(0, 0));
 }
 
 #[cfg(test)]

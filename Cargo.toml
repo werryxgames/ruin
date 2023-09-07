@@ -11,15 +11,16 @@ authors = ["Werryx Games <werryxgames@proton.me>"]
 #panic = "abort"
 
 [dependencies]
-bootloader = { version = "0.9.23", features = ["map_physical_memory"] }
-volatile = "0.2.6"
-spin = "0.9.8"
-x86_64 = "0.14.10"
-uart_16550 = "0.3.0"
-pic8259 = "0.10.4"
+bootloader = { version = "0.9", features = ["map_physical_memory"] }
+volatile = "0.5"
+spin = "0.9"
+x86_64 = "0.14"
+uart_16550 = "0.3"
+pic8259 = "0.10"
+linked_list_allocator = "0.10"
 
 [dependencies.lazy_static]
-version = "1.4.0"
+version = "1.4"
 features = ["spin_no_std"]
 
 [package.metadata.bootimage]

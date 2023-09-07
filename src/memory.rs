@@ -40,7 +40,7 @@ pub unsafe fn get_physical_address(virtual_address: VirtAddr, physical_offset: V
 }
 
 pub fn map_page(page: Page, mapper: &mut OffsetPageTable, frame_allocator: &mut impl FrameAllocator<Size4KiB>) {
-    let frame = PhysFrame::containing_address(PhysAddr::new(0xB8000));
+    let frame = PhysFrame::containing_address(PhysAddr::new(0xB8000)); // FIXME: 0xB8000?
     let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
     unsafe {mapper.map_to(page, frame, flags, frame_allocator)}.unwrap().flush();
 }
@@ -48,6 +48,21 @@ pub fn map_page(page: Page, mapper: &mut OffsetPageTable, frame_allocator: &mut 
 pub unsafe fn init(physical_offset: VirtAddr) -> OffsetPageTable<'static> {
     let l4_table = get_current_page_table(physical_offset);
     OffsetPageTable::new(l4_table, physical_offset)
+}
+
+pub struct EmptyFrameAllocator {
+}
+
+impl EmptyFrameAllocator {
+    pub fn new() -> Self {
+        EmptyFrameAllocator {}
+    }
+}
+
+unsafe impl FrameAllocator<Size4KiB> for EmptyFrameAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame<Size4KiB>> {
+        None
+    }
 }
 
 pub struct MemoryMapFrameAllocator {

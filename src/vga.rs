@@ -1,8 +1,9 @@
 use core::fmt;
 use core::fmt::Write;
+use core::ptr::NonNull;
 
 use spin::Mutex;
-use volatile::Volatile;
+use volatile::VolatileRef;
 
 use lazy_static::lazy_static;
 use x86_64::instructions::interrupts;
@@ -51,7 +52,7 @@ pub const BUFFER_HEIGHT: usize = 25;
 
 #[repr(transparent)]
 pub struct VgaBuffer {
-    pub chars: [[Volatile<VgaChar>; BUFFER_WIDTH]; BUFFER_HEIGHT]
+    pub chars: [[VgaChar; BUFFER_WIDTH]; BUFFER_HEIGHT]
 }
 
 pub struct VgaWriter {
@@ -77,10 +78,12 @@ impl VgaWriter {
                 let col = self.column;
                 let color = self.color;
 
-                self.buffer.chars[row][col].write(VgaChar {
-                    character: byte,
-                    color
-                });
+                unsafe {
+                    VolatileRef::new(NonNull::new(&mut self.buffer.chars[row][col]).unwrap()).as_mut_ptr().write(VgaChar {
+                        character: byte,
+                        color
+                    })
+                };
                 self.column += 1;
             }
         }
@@ -102,15 +105,15 @@ impl VgaWriter {
         };
 
         for col in 0..BUFFER_WIDTH {
-            self.buffer.chars[row][col].write(empty);
+            unsafe { VolatileRef::new(NonNull::new(&mut self.buffer.chars[row][col]).unwrap()).as_mut_ptr().write(empty); }
         }
     }
 
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
-                let character = self.buffer.chars[row][col].read();
-                self.buffer.chars[row - 1][col].write(character);
+                let character = self.buffer.chars[row][col]; // non-volatile read because of volatile write line below
+                unsafe { VolatileRef::new(NonNull::new(&mut self.buffer.chars[row - 1][col]).unwrap()).as_mut_ptr().write(character); }
             }
         }
 

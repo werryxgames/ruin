@@ -4,6 +4,7 @@
 
 use ruin::{exit_qemu, QemuExitCode, serial_println};
 use core::panic::PanicInfo;
+use core::ptr::NonNull;
 use lazy_static::lazy_static;
 use x86_64::structures::idt::InterruptDescriptorTable;
 use x86_64::structures::idt::InterruptStackFrame;
@@ -37,7 +38,7 @@ extern "x86-interrupt" fn test_double_fault_handler(
 #[allow(unconditional_recursion)]
 fn stack_overflow() {
     stack_overflow();
-    volatile::Volatile::new(0).read();
+    unsafe { volatile::VolatileRef::new(NonNull::new(0xB8000 as *mut usize).unwrap()).as_mut_ptr().read(); }
 }
 
 #[no_mangle]

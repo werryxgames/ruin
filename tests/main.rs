@@ -6,6 +6,8 @@
 
 use core::panic::PanicInfo;
 use core::fmt::Write;
+use core::ptr::NonNull;
+use volatile::VolatileRef;
 use x86_64::instructions::interrupts;
 use ruin::vga::WRITER;
 use ruin::vga::BUFFER_WIDTH;
@@ -44,7 +46,8 @@ fn test_println_text() {
         writeln!(writer, "\n{}", string).unwrap();
 
         for (i, char) in string.chars().enumerate() {
-            let real_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
+            let real_char;
+            unsafe { real_char = VolatileRef::new(NonNull::new(&mut writer.buffer.chars[BUFFER_HEIGHT - 2][i]).unwrap()).as_ptr().read() };
             assert_eq!(char::from(real_char.character), char);
         }
     });

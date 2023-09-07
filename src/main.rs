@@ -4,10 +4,12 @@
 #![test_runner(ruin::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+extern crate alloc;
 use core::panic::PanicInfo;
-use ruin::{halt_loop, serial_println, println, memory};
+use alloc::{boxed::Box, vec::Vec};
+use ruin::{halt_loop, serial_println, println, memory, allocator};
 use bootloader::{BootInfo, entry_point};
-use x86_64::{structures::paging::Page, VirtAddr};
+use x86_64::VirtAddr;
 
 #[cfg(not(test))]
 #[panic_handler]
@@ -31,9 +33,26 @@ pub fn kernel_start(boot_info: &'static BootInfo) -> ! {
 
     let mut mapper = unsafe { memory::init(VirtAddr::new(boot_info.physical_memory_offset)) };
     let mut frame_allocator = unsafe { memory::MemoryMapFrameAllocator::new(&boot_info.memory_map) };
-    let page = Page::containing_address(VirtAddr::new(0));
-    memory::map_page(page, &mut mapper, &mut frame_allocator);
-    unsafe { (page.start_address().as_mut_ptr() as *mut u64).offset(400).write_volatile(0x_f021_f077_f065_f04e) }
+    allocator::init_heap(&mut mapper, &mut frame_allocator).unwrap();
+    let x = Box::new(42);
+    println!("Box ptr = {:p}", x);
+    let mut vec = Vec::new();
+
+    for i in 0..500 {
+        vec.push(i);
+    }
+
+    println!("Vec ptr = {:p}", vec.as_slice());
+    allocator::map_physical(&mut mapper, 0xE0000, 0xFFFFF).unwrap();
+
+    if ruin::acpi::find_xsdp_bios().is_some() {
+        println!("Found XSDP")
+    } else {
+        println!("Not found XSDP");
+    };
+
+    // ata_pio::initialize();
+    println!("Vendor: {}", ruin::pci::check_vendor(0, 0));
 
     #[cfg(test)]
     test_main();
