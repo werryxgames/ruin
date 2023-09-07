@@ -17,8 +17,6 @@ jobs:
     - uses: actions/checkout@v3
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
-      with:
-        platforms: "x86_64"
     - name: "Set up rust: Override to nightly"
       run: rustup override set nightly
     - name: "Set up rust: Add component 'rust-src'"
