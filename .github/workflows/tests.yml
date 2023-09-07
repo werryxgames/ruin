@@ -31,5 +31,7 @@ jobs:
       run: cargo build --verbose
     - name: Run cargo check
       run: cargo check --verbose
+    - name: Generate boot image
+      run: cargo bootimage
     - name: Run tests
       run: cargo test --verbose
