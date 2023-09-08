@@ -28,7 +28,6 @@ pub extern "C" fn _start() -> ! {
 #[test_case]
 fn test_println_once() {
     println!("Hello, World!");
-    panic!("Should fail");
 }
 
 #[test_case]
