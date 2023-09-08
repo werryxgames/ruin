@@ -1,4 +1,4 @@
-name: Tests
+name: Docker tests
 
 on:
   push:
@@ -6,32 +6,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
-    - name: "Set up rust: Override to nightly"
-      run: rustup override set nightly
-    - name: "Set up rust: Update rustup"
-      run: rustup update
-    - name: "Set up rust: Add component 'rust-src'"
-      run: rustup component add rust-src
-    - name: "Set up rust: Add component 'llvm-tools-preview'"
-      run: rustup component add llvm-tools-preview
-    - name: Set up cargo
-      run: cargo install bootimage
-    - name: Build
-      run: cargo build --verbose
-    - name: Run cargo check
-      run: cargo check --verbose
-    - name: Generate boot image
-      run: cargo bootimage
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Build the Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ruinos/alpine-tests:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
