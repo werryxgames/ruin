@@ -17,5 +17,3 @@ jobs:
         context: .
         push: true
         tags: ruinos/alpine-tests:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
